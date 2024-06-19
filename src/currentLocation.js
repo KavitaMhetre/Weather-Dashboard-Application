@@ -102,10 +102,16 @@ class Weather extends React.Component {
     });
   };
   getWeather = async (lat, lon) => {
-    const api_call = await fetch(
-      `${apiKeys.base}weather?lat=${lat}&lon=${lon}&units=metric&APPID=${apiKeys.key}`
-    );
-    const data = await api_call.json();
+      try {
+      const response = await fetch(
+        `${apiKeys.base}weather?lat=${lat}&lon=${lon}&units=metric&APPID=${apiKeys.key}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+    const data = await response.json();
     this.setState({
       lat: lat,
       lon: lon,
@@ -119,7 +125,15 @@ class Weather extends React.Component {
 
       // sunset: this.getTimeFromUnixTimeStamp(data.sys.sunset),
     });
-    switch (this.state.main) {
+    this.updateIcon(data.weather[0].main);
+  } catch (error) {
+    console.error("Error fetching weather data:", error);
+    this.setState({ errorMsg: "Failed to fetch weather data" });
+  }
+};
+
+updateIcon = (weatherMain) => {
+    switch (weatherMain) {
       case "Haze":
         this.setState({ icon: "CLEAR_DAY" });
         break;
@@ -202,6 +216,9 @@ class Weather extends React.Component {
             Your current location wil be displayed on the App <br></br> & used
             for calculating Real time weather.
           </h3>
+          {this.state.errorMsg && (
+            <p style={{ color: "red" }}>{this.state.errorMsg}</p>
+          )}
         </React.Fragment>
       );
     }
